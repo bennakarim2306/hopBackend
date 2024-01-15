@@ -1,11 +1,7 @@
 package com.hop.drivesharing.hopapplication.user;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+
 import java.sql.Date;
 import java.util.Collection;
 import java.util.List;
@@ -22,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @AllArgsConstructor
 @Builder
 @Entity(name = "user-details")
+@Table(schema = "userDetails")
 public class User implements UserDetails {
 
     @Id
