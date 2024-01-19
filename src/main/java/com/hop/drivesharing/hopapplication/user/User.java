@@ -3,12 +3,11 @@ package com.hop.drivesharing.hopapplication.user;
 import jakarta.persistence.*;
 
 import java.sql.Date;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,12 +17,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 @AllArgsConstructor
 @Builder
 @Entity(name = "user-details")
-@Table(schema = "userDetails")
+@Table(schema = "user_details")
 public class User implements UserDetails {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     private String firstName;
 
@@ -38,6 +37,13 @@ public class User implements UserDetails {
     private String password;
 
     private boolean consentAllowed;
+
+    private String friendsList;
+
+    @Transient
+    @Getter
+    @Setter
+    private List<String> friendsIdsList;
 
     @Enumerated(EnumType.STRING)
     private Role role;
@@ -70,5 +76,12 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    @PostLoad
+    private void parseFriendsListIds () {
+        if(this.friendsList != null) {
+            this.friendsIdsList = Arrays.stream(this.getFriendsList().split("\\|")).toList();
+        }
     }
 }

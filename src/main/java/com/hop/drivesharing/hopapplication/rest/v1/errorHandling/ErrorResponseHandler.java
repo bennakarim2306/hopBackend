@@ -1,21 +1,17 @@
 package com.hop.drivesharing.hopapplication.rest.v1.errorHandling;
 
 
-import com.hop.drivesharing.hopapplication.exception.AuthorizationResponseException;
-import com.hop.drivesharing.hopapplication.exception.InvalidExceptionPassword;
-import com.hop.drivesharing.hopapplication.exception.InvalidExceptionUsername;
-import com.hop.drivesharing.hopapplication.exception.UserAlreadyExistingException;
+import com.hop.drivesharing.hopapplication.exception.*;
 import com.hop.drivesharing.hopapplication.rest.v1.dto.AuthenticationErrorResponse;
+import com.hop.drivesharing.hopapplication.rest.v1.dto.RestErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import java.util.Objects;
 
 @ControllerAdvice
 public class ErrorResponseHandler {
@@ -45,6 +41,11 @@ public class ErrorResponseHandler {
             errorMessage = "Some validation error occurred";
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new AuthenticationErrorResponse(errorMessage, ErrorCode.INPUT_VALIDATION_ERROR));
+    }
+
+    @ExceptionHandler(value = {AddFriendToListException.class})
+    protected ResponseEntity<RestErrorResponse> handleAddFriendException(Exception e, HttpServletRequest request) {
+        return ResponseEntity.badRequest().body(RestErrorResponse.builder().message(e.getMessage()).build());
     }
 
 }
