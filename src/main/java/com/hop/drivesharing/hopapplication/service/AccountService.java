@@ -1,6 +1,8 @@
 package com.hop.drivesharing.hopapplication.service;
 
 import com.hop.drivesharing.hopapplication.exception.AddFriendToListException;
+import com.hop.drivesharing.hopapplication.rest.v1.dto.AccountInformationResponse;
+import com.hop.drivesharing.hopapplication.rest.v1.dto.UserLight;
 import com.hop.drivesharing.hopapplication.security.JwtService;
 import com.hop.drivesharing.hopapplication.user.User;
 import com.hop.drivesharing.hopapplication.user.UserRepository;
@@ -47,21 +49,30 @@ public class AccountService {
         }
     }
 
-    public List<String> getFriendsList(String authHeader) {
+    public AccountInformationResponse getFriendsList(String authHeader) {
         String email = jwtService.extractUserEmail(authHeader.substring(7));
+        List<UserLight> friends;
         try {
             Optional<User> user = userRepository.findByEmail(email);
             List<String> friendsIds = user.map(User::getFriendsIdsList).orElse(null);
             if(CollectionUtils.isEmpty(friendsIds)) {
                 return null;
             }
-            return friendsIds.stream().map(id -> {
+            friends = friendsIds.stream().map(id -> {
                 try {
-                    return userRepository.findById(id).orElseThrow(Exception::new).getEmail();
+                    UserLight friend = new UserLight();
+                    friend.setEmail(userRepository.findById(id).orElseThrow(Exception::new).getEmail());
+                    friend.setId(id);
+                    return friend;
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }).toList();
+            return AccountInformationResponse.builder()
+                    .firstName(user.get().getFirstName())
+                    .lastName(user.get().getLastName())
+                    .friends(friends)
+                    .build();
         } catch (Exception e) {
             log.error("Some error occurred during getFriendsList {}", e.getMessage());
             throw e;
