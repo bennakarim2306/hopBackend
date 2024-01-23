@@ -17,6 +17,8 @@ public class UserLight {
 
     private String id;
     private String email;
+    private String firstName;
+    private String lastName;
 
     //TODO here come more information about the user data retrieved for example profile picture
 

@@ -9,7 +9,9 @@ import com.hop.drivesharing.hopapplication.user.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,7 +41,7 @@ public class AccountService {
 
             Optional<User> user = userRepository.findByEmail(email);
             user.ifPresent(usr ->  {
-                String newFriendList = usr.getFriendsList().isEmpty() ? friendsId : usr.getFriendsList() + "|" + friendsId;
+                String newFriendList = !StringUtils.hasLength(usr.getFriendsList()) ? friendsId : usr.getFriendsList() + "|" + friendsId;
                 usr.setFriendsList(newFriendList);
                 userRepository.save(user.get());
             });
@@ -77,6 +79,22 @@ public class AccountService {
             log.error("Some error occurred during getFriendsList {}", e.getMessage());
             throw e;
         }
+
+    }
+
+    public AccountInformationResponse addUserInformationToFriendsList(String authHeader) {
+        String email = jwtService.extractUserEmail(authHeader.substring(7));
+        User user = userRepository.findByEmail(email).orElse(null);
+        List<UserLight> friendsListRequest = new ArrayList<>();
+        assert user != null;
+        friendsListRequest.add(UserLight.builder()
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .id(user.getId())
+                .build());
+        return AccountInformationResponse.builder()
+                .friends(friendsListRequest).build();
 
     }
 }
