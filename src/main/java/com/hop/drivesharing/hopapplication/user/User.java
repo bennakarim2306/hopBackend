@@ -1,16 +1,15 @@
 package com.hop.drivesharing.hopapplication.user;
 
 import jakarta.persistence.*;
+import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.sql.Date;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
-import lombok.*;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 @Data
 @NoArgsConstructor
@@ -40,10 +39,17 @@ public class User implements UserDetails {
 
     private String friendsList;
 
+    private String friendsRequestList;
+
     @Transient
     @Getter
     @Setter
     private List<String> friendsIdsList;
+
+    @Transient
+    @Getter
+    @Setter
+    private List<String> friendsRequestsIdsList;
 
     @Enumerated(EnumType.STRING)
     private Role role;
@@ -82,6 +88,9 @@ public class User implements UserDetails {
     private void parseFriendsListIds () {
         if(this.friendsList != null) {
             this.friendsIdsList = Arrays.stream(this.getFriendsList().split("\\|")).toList();
+        }
+        if(this.friendsRequestList != null) {
+            this.friendsRequestsIdsList = Arrays.stream(this.getFriendsRequestList().split("\\|")).toList();
         }
     }
 }

@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,9 +21,12 @@ public class AccountService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
 
-    public AccountService(UserRepository userRepository, JwtService jwtService) {
+    private final NotificationService notificationService;
+
+    public AccountService(UserRepository userRepository, JwtService jwtService, NotificationService notificationService) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
+        this.notificationService = notificationService;
     }
 
 
@@ -82,19 +84,54 @@ public class AccountService {
 
     }
 
-    public AccountInformationResponse addUserInformationToFriendsList(String authHeader) {
-        String email = jwtService.extractUserEmail(authHeader.substring(7));
-        User user = userRepository.findByEmail(email).orElse(null);
-        List<UserLight> friendsListRequest = new ArrayList<>();
-        assert user != null;
-        friendsListRequest.add(UserLight.builder()
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .id(user.getId())
-                .build());
-        return AccountInformationResponse.builder()
-                .friends(friendsListRequest).build();
+    public AccountInformationResponse confirmContactRequest(String authHeader, String email) throws AddFriendToListException {
+        String userEmail = jwtService.extractUserEmail(authHeader.substring(7));
+        try {
+            Optional<User> user = userRepository.findByEmail(userEmail);
+            Optional<User> friend = userRepository.findByEmail(email);
+            if(friend.isEmpty()) {
+                throw new AddFriendToListException("Friend not found");
+            }
+            if(user.get().getFriendsRequestList().contains(friend.get().getId())) {
+                String friendsRequestList = user.get().getFriendsRequestList().replace(friend.get().getId(), "");
+                user.get().setFriendsRequestList(friendsRequestList);
+            } else {
+                throw new AddFriendToListException("Friend not found in request list");
+            }
+            String friendsList = !StringUtils.hasLength(user.get().getFriendsList()) ? friend.get().getId() : user.get().getFriendsList() + "|" + friend.get().getId();
+            user.get().setFriendsList(friendsList);
+            userRepository.save(user.get());
+            return AccountInformationResponse.builder()
+                    .firstName(user.get().getFirstName())
+                    .lastName(user.get().getLastName())
+                    .email(user.get().getEmail())
+                    .build();
+        } catch (Exception e) {
+            log.error("Some error occurred during confirmContactRequest {}", e.getMessage());
+            throw e;
+        }
+    }
 
+    public AccountInformationResponse generateContactRequest(String authHeader, String email) throws AddFriendToListException {
+        String userEmail = jwtService.extractUserEmail(authHeader.substring(7));
+        try {
+            Optional<User> user = userRepository.findByEmail(userEmail);
+            Optional<User> friend = userRepository.findByEmail(email);
+            if(friend.isEmpty()) {
+                throw new AddFriendToListException("Friend not found");
+            }
+            notificationService.sendContactNotification(user.get().getEmail(), friend.get().getEmail());
+            String friendsRequestList = !StringUtils.hasLength(user.get().getFriendsRequestList()) ? friend.get().getId() : user.get().getFriendsRequestList() + "|" + friend.get().getId();
+            user.get().setFriendsRequestList(friendsRequestList);
+            userRepository.save(user.get());
+            return AccountInformationResponse.builder()
+                    .firstName(user.get().getFirstName())
+                    .lastName(user.get().getLastName())
+                    .email(user.get().getEmail())
+                    .build();
+        } catch (Exception e) {
+            log.error("Some error occurred during generateContactRequest {}", e.getMessage());
+            throw e;
+        }
     }
 }

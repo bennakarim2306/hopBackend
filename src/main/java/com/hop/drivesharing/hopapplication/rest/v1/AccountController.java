@@ -17,11 +17,10 @@ public class AccountController {
     }
 
     @PostMapping("/addFriend/{email}")
-    public void addFriendByEmail(@RequestHeader("Authorization") String authHeader, @PathVariable String email) throws Exception {
+    public void addContactByEmail(@RequestHeader("Authorization") String authHeader, @PathVariable String email) throws Exception {
         // TODO send a friend add request to User
-        AccountInformationResponse accountInformationResponse = accountService.addUserInformationToFriendsList(authHeader);
+        AccountInformationResponse accountInformationResponse = accountService.generateContactRequest(authHeader, email);
         accountInformationResponse.setEmail(email);
-        accountService.addFriendToList(authHeader, email);
     }
 
     @GetMapping("/friendsList")
